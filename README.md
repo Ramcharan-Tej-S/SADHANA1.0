@@ -1,11 +1,17 @@
-# SADHANA
+# SADHANA – Your Personalised Academic Companion
 
-**An AI-powered exam timetable and neurodivergent routine optimizer.** Point it at your syllabus,
-tell it when your exams are and when you're actually free, and seven LLM agents turn that into an
-adaptive study plan that re-plans itself as your energy shifts and real scores come in.
+SADHANA is an AI-powered, ADHD-inclusive learning and academic support platform designed specifically for university students with ADHD.
 
-FastAPI backend · SQLite · OpenRouter · an 8-bit arcade frontend with ADHD cognitive ergonomics,
-ambient focus audio, and zero build step.
+It aims to make studying more manageable through personalised learning experiences, adaptive AI tutoring and intelligent academic planning. SADHANA breaks complex subjects into smaller, understandable concepts, provides interactive practice and adapts explanations based on each student's learning progress.
+
+With features such as flexible focus sessions, a Thought Parking Lot for capturing distracting thoughts, adaptive study planning and personalised progress tracking, SADHANA helps students organise their academic lives and approach learning at their own pace.
+
+Inspired by the principles of mindfulness, discipline and self-awareness, SADHANA brings together technology and thoughtful learning strategies to create a more supportive academic environment.
+
+**Our vision is simple: Make learning more accessible, manageable and personalised, one concept at a time.**
+
+FastAPI backend · SQLite · OpenRouter · an 8-bit arcade frontend with ADHD cognitive ergonomics, ambient focus audio, and zero build step.
+
 
 ---
 
