@@ -1,11 +1,11 @@
-# ExamFlow AI
+# SADHANA
 
-**An AI-powered exam timetable optimizer.** Point it at your syllabus, tell it when your
-exams are and when you're actually free, and six LLM agents turn that into a study plan
-that re-plans itself as your real scores come in.
+**An AI-powered exam timetable and neurodivergent routine optimizer.** Point it at your syllabus,
+tell it when your exams are and when you're actually free, and seven LLM agents turn that into an
+adaptive study plan that re-plans itself as your energy shifts and real scores come in.
 
-FastAPI backend · SQLite · OpenRouter · a hand-built 8-bit arcade frontend with no
-framework and no build step.
+FastAPI backend · SQLite · OpenRouter · an 8-bit arcade frontend with ADHD cognitive ergonomics,
+ambient focus audio, and zero build step.
 
 ---
 
@@ -15,13 +15,19 @@ framework and no build step.
 - [Configuration](#configuration)
 - [System architecture](#system-architecture)
 - [Request lifecycle](#request-lifecycle)
-- [The six agents](#the-six-agents)
+- [The seven agents](#the-seven-agents)
   - [1. Syllabus Parser](#1-syllabus-parser)
   - [2. Difficulty Assessor](#2-difficulty-assessor--llm-as-judge)
   - [3. Performance Analyzer](#3-performance-analyzer)
   - [4. Schedule Optimizer](#4-schedule-optimizer)
   - [5. Readiness Predictor](#5-readiness-predictor)
   - [6. Feedback Loop](#6-feedback-loop)
+  - [7. ADHD Adaptive Tutor](#7-adhd-adaptive-tutor)
+- [ADHD & Neurodivergent Focus Suite](#adhd--neurodivergent-focus-suite)
+  - [Thought Parking Lot](#thought-parking-lot)
+  - [Focus Shield & Distraction Blocker](#focus-shield--distraction-blocker)
+  - [Sensory Audio Engine](#sensory-audio-engine)
+  - [Low-Energy Day Dynamic Adaptation](#low-energy-day-dynamic-adaptation)
 - [The closed loop](#the-closed-loop)
 - [Data model](#data-model)
 - [API reference](#api-reference)
@@ -42,23 +48,23 @@ cp .env.example .env          # paste your OpenRouter key into it
 python run.py                 # -> http://127.0.0.1:8000
 ```
 
-On Windows, if `python` resolves to the broken `C:\Windows\System32\python` stub, use the
-launcher or the full interpreter path:
+On Windows, if `python` resolves to the `C:\Windows\System32\python` stub, use the launcher:
 
 ```powershell
 py -3 run.py
 ```
 
 The app works without an API key — you can add subjects, set exams, build the availability
-grid and browse everything. Only the six AI buttons need the key, and they tell you when
-it's missing rather than failing silently.
+grid, track routines, use the sensory audio engine, and test the thought parking lot. Only the
+AI buttons need the key, and they provide helpful inline guidance when it's missing rather than
+failing silently.
 
 **First run, in order:** Setup → add subjects · Setup → upload a syllabus · Syllabus → run
 the difficulty assessment · Schedule → set exam dates and availability · Optimizer →
-generate the plan.
+generate the plan · Arena → launch your focus session with brown noise and the Thought Parking Lot.
 
-Or hit **LOAD DEMO SAVE** on the landing page to seed five subjects with topics and
-difficulty scores.
+Or hit **LOAD DEMO SAVE** on the landing page to seed subjects with topics, difficulty scores,
+and initial data.
 
 ### Before a live demo
 
@@ -66,12 +72,12 @@ difficulty scores.
 python prewarm.py     # parse every file in uploads/ into the cache
 ```
 
-Uploads of those files then return in ~0.2s instead of 6–18s, and they can't fail on
-stage because of a flaky network. `python prewarm.py --clear` empties the cache.
+Uploads of those files then return in ~0.2s instead of 6–18s, and they won't fail during a
+presentation due to a flaky network. `python prewarm.py --clear` empties the cache.
 
 Two other things worth doing beforehand: narrow your **availability** windows (a 06:00–20:00
-grid produces 11 sessions a day and a 50s plan generation; 3–4 hours a day is both
-realistic and much faster), and run the difficulty assessment once so the radar has data.
+grid produces 11 sessions a day and a 50s plan generation; 3–4 hours a day is realistic and
+much faster), and run the difficulty assessment once so the radar chart has data.
 
 ---
 
@@ -83,26 +89,26 @@ anything reads `os.environ`.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `OPENROUTER_API_KEY` | — | Required for the AI agents. Everything else works without it. |
-| `EXAMFLOW_MODEL` | `openai/gpt-4o-mini` | Any OpenRouter model id. Must support `response_format: json_object`. |
+| `EXAMFLOW_MODEL` | `openai/gpt-4o-mini` | Any OpenRouter model ID. Must support `response_format: json_object`. |
 | `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Swap for a different OpenAI-compatible gateway. |
-| `EXAMFLOW_MAX_OUTPUT_TOKENS` | `16000` | Output ceiling for the schedule optimizer. Must not exceed your model's limit. |
-| `EXAMFLOW_VISION` | `1` | Send images straight to the multimodal model. `0` forces the offline RapidOCR path (~5x slower). |
-| `EXAMFLOW_CACHE` | `1` | Cache parsed documents by content hash in `.cache/`. |
-| `OPENROUTER_APP_NAME` / `OPENROUTER_SITE_URL` | `ExamFlow AI` / localhost | Attribution headers shown on your OpenRouter dashboard. |
-| `EXAMFLOW_HOST` / `EXAMFLOW_PORT` | `127.0.0.1` / `8000` | Server bind address. |
-| `EXAMFLOW_OPEN` | `1` | Set `0` to stop it opening a browser on start. |
+| `EXAMFLOW_MAX_OUTPUT_TOKENS` | `16000` | Output ceiling for the schedule optimizer. |
+| `EXAMFLOW_VISION` | `1` | Send images directly to the multimodal model. `0` forces offline RapidOCR. |
+| `EXAMFLOW_CACHE` | `1` | Cache parsed documents by SHA-256 hash in `.cache/`. |
+| `OPENROUTER_APP_NAME` / `OPENROUTER_SITE_URL` | `SADHANA` / localhost | Attribution headers shown on your OpenRouter dashboard. |
+| `EXAMFLOW_HOST` / `EXAMFLOW_PORT` | `127.0.0.1` / `8000` | Server bind host and port. |
+| `EXAMFLOW_OPEN` | `1` | Set `0` to prevent opening the browser automatically on launch. |
 
 ### Choosing a model
 
 The agents emit deeply nested JSON, so the model must be reliable under
-`response_format: json_object`. Verified options, cheapest first:
+`response_format: json_object`. Verified options:
 
 | Model | Prompt / Completion per 1M | Notes |
 | --- | --- | --- |
-| `mistralai/mistral-small-3.2-24b-instruct` | $0.075 / $0.20 | Cheapest that still holds the schema. |
-| `meta-llama/llama-3.3-70b-instruct` | $0.10 / $0.32 | The prompts were originally authored against this. |
-| **`openai/gpt-4o-mini`** *(default)* | **$0.15 / $0.60** | Best reliability-per-rupee on the 3-pass judge. |
-| `google/gemini-2.5-flash` | $0.30 / $2.50 | Strongest, but output tokens get expensive on the optimizer. |
+| `mistralai/mistral-small-3.2-24b-instruct` | $0.075 / $0.20 | Cheapest model that reliably maintains schema compliance. |
+| `meta-llama/llama-3.3-70b-instruct` | $0.10 / $0.32 | High reasoning accuracy on schedule constraints. |
+| **`openai/gpt-4o-mini`** *(default)* | **$0.15 / $0.60** | Best reliability-to-cost ratio for the 3-pass judge and tutor. |
+| `google/gemini-2.5-flash` | $0.30 / $2.50 | Strongest multimodal syllabus parsing. |
 
 ---
 
@@ -110,41 +116,46 @@ The agents emit deeply nested JSON, so the model must be reliable under
 
 ```mermaid
 graph TB
-    subgraph Browser["Browser — no framework, no build step"]
-        HTML["index.html<br/>app shell"]
-        Router["app.js<br/>hash router · HUD · parallax layer"]
-        Pages["pages/*.js<br/>7 screens"]
-        Kit["ui.js<br/>toasts · loader · escaping · SVG charts"]
-        Sprites["sprites.js<br/>pixel-grid to SVG factory"]
-        CSS["pixel.css<br/>design tokens"]
+    subgraph Browser["Browser — No Framework, Zero Build Step"]
+        HTML["index.html<br/>App Shell"]
+        Router["app.js<br/>Hash router · HUD · Parallax layer"]
+        Pages["pages/*.js<br/>7 interactive views"]
+        ADHD["Focus Tools<br/>parkingLot.js · distractionBlocker.js · audio.js"]
+        Kit["ui.js<br/>Toasts · Loader · SVG charts"]
+        Sprites["sprites.js<br/>Pixel-grid to SVG factory"]
+        CSS["pixel.css<br/>Design tokens & 8-bit styling"]
+
         Router --> Pages
+        Pages --> ADHD
         Pages --> Kit
         Kit --> Sprites
     end
 
     subgraph Server["FastAPI — backend/main.py"]
         Static["Static host<br/>/ and /css and /js"]
-        REST["REST API<br/>/api/*"]
-        Guard["agent_call wrapper<br/>exceptions to HTTP 502"]
+        REST["REST API<br/>/api/* (Syllabus, Routine, Tutor, Optimizer)"]
+        Guard["agent_call wrapper<br/>Exceptions to clean HTTP 502"]
         REST --> Guard
     end
 
-    subgraph Agents["agents/ — six LLM agents"]
-        A1["syllabus_parser"]
-        A2["difficulty_assessor"]
-        A3["performance_analyzer"]
-        A4["schedule_optimizer"]
-        A5["readiness_predictor"]
-        A6["feedback_loop"]
+    subgraph Agents["agents/ — Seven LLM Agents"]
+        A1["1. syllabus_parser"]
+        A2["2. difficulty_assessor"]
+        A3["3. performance_analyzer"]
+        A4["4. schedule_optimizer"]
+        A5["5. readiness_predictor"]
+        A6["6. feedback_loop"]
+        A7["7. adaptive_tutor"]
     end
 
-    subgraph Data["Persistence"]
-        DB[("SQLite<br/>examflow.db<br/>9 tables")]
+    subgraph Data["Persistence Layer"]
+        DB[("SQLite<br/>examflow.db<br/>11 tables")]
         Files["uploads/"]
+        Cache[".cache/"]
     end
 
     LLM["OpenRouter<br/>OpenAI-compatible gateway"]
-    OCR["RapidOCR<br/>on-device ONNX"]
+    OCR["RapidOCR<br/>On-device fallback"]
 
     Pages -->|"fetch JSON"| REST
     HTML --> Static
@@ -154,21 +165,22 @@ graph TB
     Agents --> DB
     REST --> DB
     A1 --> Files
+    A1 --> Cache
 ```
 
-**The load-bearing idea:** `agents/` and `db/` know nothing about HTTP, and the frontend
-knows nothing about the LLM. `backend/main.py` is the only place the two meet, which is
-why the agents were reusable unchanged when the UI was rewritten from Streamlit.
+**Architectural separation:** `agents/` and `db/` contain pure Python logic independent of HTTP,
+while the frontend communicates solely via clean JSON endpoints. `backend/main.py` serves as the
+single integration bridge between the database, the agent orchestration layer, and the static UI.
 
 ---
 
 ## Request lifecycle
 
-Every AI action follows the same path. Using "generate a study plan" as the example:
+All agent-powered flows follow an orchestrated sequence. For example, during study plan optimization:
 
 ```mermaid
 sequenceDiagram
-    participant U as You
+    participant U as User
     participant P as pages/optimizer.js
     participant UI as ui.js withLoader
     participant API as POST /api/agent/generate-plan
@@ -177,343 +189,233 @@ sequenceDiagram
     participant M as OpenRouter
     participant DB as SQLite
 
-    U->>P: click GENERATE OPTIMIZED PLAN
+    U->>P: Click GENERATE OPTIMIZED PLAN
     P->>UI: withLoader("BUILDING YOUR RUN")
-    UI-->>U: full-screen retro loader
+    UI-->>U: Full-screen retro loader
     UI->>API: fetch POST
-    API->>DB: subjects, topics, difficulties, exams, availability, scores
-    DB-->>API: rows
-    API->>API: precondition checks
-    Note over API: 400 early if no availability<br/>or no upcoming exam
+    API->>DB: Fetch subjects, topics, difficulties, exams, availability, scores
+    DB-->>API: Active rows
+    API->>API: Verify preconditions (availability & exams set)
     API->>G: agent_call(generate_study_plan, ...)
-    G->>AG: invoke
-    AG->>AG: build allowed-slot grid from availability
-    AG->>AG: size max_tokens to slot count
-    AG->>M: one JSON completion
-    M-->>AG: plan with sessions
-    AG->>AG: _validate_sessions drops anything<br/>outside your availability
-    alt too few valid sessions
-        AG->>AG: top up from _fallback_schedule
+    G->>AG: Invoke agent
+    AG->>AG: Build allowed-slot grid from availability
+    AG->>AG: Size max_tokens dynamically to slot count
+    AG->>M: Send structured JSON prompt
+    M-->>AG: Generated plan sessions
+    AG->>AG: _validate_sessions drops slots outside allowed windows
+    alt Insufficient valid sessions returned
+        AG->>AG: Top up via _fallback_schedule
     end
-    AG-->>G: plan
-    G-->>API: plan
-    API->>DB: clear_sessions then insert each
+    AG-->>G: Validated plan
+    G-->>API: Plan payload
+    API->>DB: Replace existing sessions and persist plan
     API-->>UI: {saved, reasoning, strategy}
-    UI-->>U: hide loader, toast, render reasoning
+    UI-->>U: Dismiss loader, display toast, render reasoning
 ```
-
-Two defensive layers worth knowing about:
-
-- **`agent_call`** ([backend/main.py](backend/main.py)) wraps every agent invocation. Any
-  exception becomes a clean HTTP 502 with the message, and if `OPENROUTER_API_KEY` is
-  unset it prefixes that fact so the UI can say something useful.
-- **Every agent has a deterministic fallback.** A model outage degrades a feature to
-  arithmetic; it never breaks the page.
 
 ---
 
-## The six agents
+## The seven agents
 
-All six live in `agents/`, are plain functions, and get their model from
-`config.get_llm(temperature, max_tokens, json_mode)`. None of them import FastAPI.
+Every agent lives in `agents/`, operates as a standalone function, and obtains its model via
+`config.get_llm(temperature, max_tokens, json_mode)`.
 
-| # | Agent | Pattern | LLM calls | Fallback when the model fails |
+| # | Agent | Pattern | LLM calls | Deterministic fallback |
 | --- | --- | --- | --- | --- |
-| 1 | Syllabus Parser | Chain-of-thought extraction | 1 | Empty unit list + error in `reasoning` |
-| 2 | Difficulty Assessor | **LLM-as-Judge, 3 passes** | 3 | Pass-1 results, else all `medium` @ 0.3 confidence |
-| 3 | Performance Analyzer | Comparative analysis | 1 | Threshold arithmetic on score percentages |
+| 1 | Syllabus Parser | Chain-of-thought extraction | 1 | Empty unit list with reasoning error |
+| 2 | Difficulty Assessor | **LLM-as-Judge (3 passes)** | 3 | Pass-1 results, else fallback to `medium` @ 0.3 |
+| 3 | Performance Analyzer | Comparative analysis | 1 | Threshold-based score arithmetic |
 | 4 | Schedule Optimizer | Constraint-aware planning | 1 | Round-robin slot filler |
-| 5 | Readiness Predictor | Chain-of-thought scoring | 1 per subject | Weighted formula with hard-topic penalty |
+| 5 | Readiness Predictor | Chain-of-thought scoring | 1 per subject | Weighted formula with hard-topic penalties |
 | 6 | Feedback Loop | Meta-analysis | 2 | Mean absolute error per subject |
+| 7 | **ADHD Adaptive Tutor** | **High-grasp cognitive scaffolding** | 1 | Pre-formatted intuition anchor & ASCII mental model |
 
 ---
 
 ### 1. Syllabus Parser
 
-`agents/syllabus_parser_agent.py` — turns a document into structured units and topics.
+`agents/syllabus_parser_agent.py` — transforms syllabi and past exam papers into structured units,
+topics, and estimated revision durations.
 
-```mermaid
-graph TB
-    F["Uploaded file"] --> H["sha256 of the bytes"]
-    H --> C{"in .cache?"}
-    C -->|"hit"| CA["return cached parse<br/>~0.2s, no model call"]
-    C -->|"miss"| T{"file type"}
-
-    T -->|"image + vision on"| V["Vision call<br/>image as data URL<br/>downscaled to 1600px"]
-    T -->|".pdf"| P["PyPDF2 page text<br/>~1s"]
-    T -->|".txt"| X["read utf-8"]
-    T -->|"image + vision off"| O["RapidOCR on-device<br/>~15-25s CPU"]
-
-    P --> R["raw text, first 4000 chars"]
-    X --> R
-    O --> R
-    R --> L["Text call · temp 0.1 · JSON"]
-
-    V -->|"empty or error"| O
-    V --> U["units[] with topics[]<br/>name · description · estimated_hours"]
-    L --> U
-    U --> W["write to .cache"]
-    U --> D[("topics table")]
-    CA --> D
-```
-
-Two prompts share the extraction step:
-
-- **`parse_syllabus`** → `{subject_name, reasoning, units[{unit_name, topics[{topic_name, description, estimated_hours}]}]}`
-- **`parse_question_paper`** → `{important_topics[{topic, frequency, marks_weight}]}` — used
-  to spot which topics actually get examined.
-
-The prompt asks the model to reason about structure *before* emitting units, and that
-reasoning is surfaced in the UI rather than thrown away.
-
-**Images go to the vision model, not to OCR.** Local RapidOCR costs 13–25s of CPU on even
-a 470×821 screenshot, and its output is rough (`Intemet`, `CLA Tria`). Sending the image
-directly to the multimodal model is one network call instead — measurably faster *and*
-more accurate, because the model sees the table layout rather than a flattened line dump.
-
-| Route | 470×821 screenshot | Quality |
-| --- | --- | --- |
-| RapidOCR then text parse | ~40–58s | Typos the parser has to guess at |
-| **Vision call** *(default)* | **6–18s** | Reads `CIA Triad` correctly |
-| **Cache hit** | **0.2s** | Identical |
-
-RapidOCR is kept as the fallback: it runs when `EXAMFLOW_VISION=0`, when the configured
-model can't read images, or when the vision call returns nothing. That keeps a fully
-offline path available — no image ever leaves the machine on that route.
-
-**Parse cache.** Every upload is hashed (sha256 of the bytes) and its parsed result stored
-in `.cache/`. Re-uploading the same document skips OCR *and* the model entirely. Run
-`python prewarm.py` before a demo to warm every file in `uploads/` up front.
+- **Multimodal Vision:** Image uploads are routed directly to the multimodal model, preserving
+  table formatting and reading complex text in 6–18s (compared to 40–90s via CPU-bound OCR).
+- **Offline OCR Fallback:** RapidOCR executes locally when offline or when `EXAMFLOW_VISION=0`.
+- **Content-Addressable Cache:** Documents are indexed by SHA-256 hash in `.cache/`. Re-uploaded files
+  resolve in ~0.2s without making model requests.
 
 ---
 
 ### 2. Difficulty Assessor — LLM-as-Judge
 
-`agents/difficulty_assessor_agent.py` — the most interesting agent in the project. Rather
-than trusting one scoring pass, it makes the model critique and then re-calibrate itself.
+`agents/difficulty_assessor_agent.py` — runs a multi-pass evaluation to mitigate central-tendency bias:
 
 ```mermaid
 graph TB
-    T["All topics in a subject<br/>id · name · unit · description"] --> P1
+    T["Subject topics<br/>ID · Name · Unit · Context"] --> P1
 
     subgraph Pass1["PASS 1 — Assess"]
-        P1["Score 1-10 on:<br/>concept abstraction<br/>mathematical complexity<br/>prerequisite depth<br/>common student struggles"]
+        P1["Score 1.0-10.0 on:<br/>Abstraction · Math complexity<br/>Prerequisites · Typical friction"]
     end
 
-    P1 --> A1["assessments[]<br/>initial_score · initial_level · factors"]
+    P1 --> A1["Initial assessments"]
     A1 --> P2
 
     subgraph Pass2["PASS 2 — Critique"]
-        P2["Review pass 1 for:<br/>ratings too high or low<br/>relative difficulty coherence<br/>central-tendency bias<br/>i.e. everything marked medium"]
+        P2["Review ratings for:<br/>Central tendency bias<br/>Relative difficulty coherence<br/>Over/under-scoring"]
     end
 
-    P2 --> A2["critique + adjustments[]<br/>original vs suggested score"]
+    P2 --> A2["Critique & recommended deltas"]
 
     A1 --> P3
     A2 --> P3
 
     subgraph Pass3["PASS 3 — Calibrate"]
-        P3["Synthesize both.<br/>Final score 1.0-10.0<br/>easy 1.0-3.5<br/>medium 3.6-6.5<br/>hard 6.6-10.0<br/>plus a confidence 0-1"]
+        P3["Synthesize consensus:<br/>Easy (1.0-3.5) · Medium (3.6-6.5) · Hard (6.6-10.0)<br/>Confidence (0.0-1.0) & reasoning"]
     end
 
-    P3 --> R["results[]<br/>score · level · confidence · reasoning"]
-    R --> S["save_difficulty_results<br/>4-stage topic matching"]
+    P3 --> R["Calibrated results"]
+    R --> S["save_difficulty_results<br/>Defensive 4-stage topic matching"]
     S --> DB[("difficulty_scores")]
-
-    P1 -.->|"fails"| FB["all medium @ 0.3"]
-    P3 -.->|"fails"| FB2["fall back to pass 1 @ 0.6"]
 ```
-
-**Why three passes?** A single pass exhibits strong central-tendency bias — almost
-everything lands on "medium". Pass 2 exists specifically to catch that, and it's called
-out in the prompt as an explicit failure mode to look for.
-
-**Topic matching** (`save_difficulty_results`) is defensive, because models rename things.
-It tries four strategies in order:
-
-1. The `topic_id` the model echoed back, validated against real ids
-2. Exact `topic_name` match
-3. Case-insensitive substring match either direction
-4. Positional fallback by index, skipping ids already claimed
-
-**Confidence degrades honestly** with how far down the fallback chain the result came
-from: 3 passes → the model's own value · pass 1 only → 0.6 · total failure → 0.3.
 
 ---
 
 ### 3. Performance Analyzer
 
-`agents/performance_analyzer_agent.py` — converts real test scores into priority shifts.
+`agents/performance_analyzer_agent.py` — translates real test performance (such as CIE scores) into
+dynamically weighted study allocations:
 
-Input: every `test_score` row, subjects with their `self_rating`, and the topic difficulty
-map. The prompt encodes explicit banding, then asks for cross-referencing:
-
-| Score | Priority |
-| --- | --- |
-| below 60% | HIGH |
-| 60–75% | MEDIUM |
-| above 75% | REDUCED |
-
-The interesting instruction is the cross-reference: *"low score + hard topics = critical
-focus area"*, and *"identify surprising results — high score on hard topics, low score on
-easy ones"*. That's what separates it from a spreadsheet.
-
-Output per subject: `performance_level`, `weak_areas[]`, `strong_areas[]`,
-`priority_shift` (increase/maintain/decrease), `new_priority_score`, and a
-`focus_recommendation`. Results are written to `performance_log` so the feedback loop can
-read them later.
-
-**Fallback:** pure threshold arithmetic on score percentages.
+- Banding: `<60%` (High Priority), `60–75%` (Medium Priority), `>75%` (Reduced Priority).
+- Cross-referencing: Flags high-difficulty topics with poor scores as critical areas, and detects
+  anomalies where students struggle with foundational topics.
 
 ---
 
 ### 4. Schedule Optimizer
 
-`agents/schedule_optimizer_agent.py` — the largest agent, and the one with the most
-engineering around the model.
+`agents/schedule_optimizer_agent.py` — generates a comprehensive timetable enforcing nine strict constraints:
 
-```mermaid
-graph TB
-    subgraph Inputs
-        S["subjects"]
-        T["topics by subject"]
-        D["difficulty scores"]
-        E["upcoming exams"]
-        AV["weekly availability"]
-        SC["CIE scores"]
-    end
+1. Adherence only to designated user availability windows.
+2. Complete exclusion of days marked `NOT AVAILABLE`.
+3. Standard 60-minute revision blocks separated by 15-minute cognitive breaks.
+4. Placement of difficult topics during user-designated peak energy hours.
+5. Spacing revisions across multiple days (spaced repetition).
+6. Preserving a 2–3 day buffer prior to exams for final review.
+7. Distributing subjects evenly within each study day.
+8. Prioritizing subjects with upcoming exams or low continuous assessment scores.
+9. Full utilization of free availability slots.
 
-    AV --> G["_generate_time_slots<br/>60-min blocks + 15-min breaks<br/>carved from each window"]
-    E --> H["_calc_plan_days<br/>today to 1 day pre-exam<br/>clamped 7..60"]
+#### Dynamic Recalculation (`recalculate_after_skip`)
 
-    G --> GRID["Explicit allowed-slot grid<br/>every date + start time,<br/>days marked NOT AVAILABLE"]
-    H --> GRID
-
-    GRID --> BUD["max_tokens = 800 + 60 x slots<br/>capped at 16000"]
-    BUD --> P["Single JSON completion · temp 0.3"]
-    S --> P
-    T --> P
-    D --> P
-    SC --> P
-
-    P --> V["_validate_sessions<br/>drop anything outside a window<br/>clamp duration to 120 min"]
-
-    V --> C{"valid >= half<br/>the fallback size?"}
-    C -->|yes| OUT["final sessions"]
-    C -->|no| TOP["top up from _fallback_schedule<br/>skipping slots already used"]
-    TOP --> OUT
-    P -.->|"exception"| FB["_fallback_schedule<br/>round-robin over all topics"]
-    FB --> OUT
-    OUT --> SORT["sort by date, then time"] --> DB[("study_sessions")]
-```
-
-**The nine constraints in the prompt:** only use listed slots · never schedule on
-NOT AVAILABLE days · fixed 60-minute sessions · hard topics into peak hours · space
-revision across days · leave 2–3 days pre-exam for revision only · balance subjects
-within a day · prioritize low-CIE subjects · fill every available slot.
-
-**Trust but verify.** The model is asked to respect availability, and then
-`_validate_sessions` independently drops anything that doesn't fit a real window. The
-prompt is a hint; the validator is the guarantee.
-
-**Token budgeting.** The output size scales with slot count — one JSON object per session.
-A fixed cap silently truncated the JSON on any realistic schedule, which made
-`json.loads` throw and dropped every run into the algorithmic fallback. The budget is now
-computed from the actual grid size before the call.
-
-#### Recalculation — `recalculate_after_skip`
-
-Generating replaces the whole plan. Recalculating is the *dynamic* path: it keeps
-completed work and only re-books the topics from sessions you marked skipped.
-
-```mermaid
-graph LR
-    SK["skipped sessions"] --> L["LLM proposes new slots"]
-    RM["remaining planned"] --> L
-    AV["availability"] --> L
-    L --> V["_validate_sessions"]
-    V --> B{"slot already<br/>booked?"}
-    B -->|no| OK["insert as planned, high priority"]
-    B -->|yes| FS["_free_slots<br/>walk the grid forward 30 days<br/>for a genuinely empty slot"]
-    FS --> OK
-    FS -->|"grid full"| RPT["report unplaced<br/>tell the user to widen availability"]
-```
-
-On a saturated schedule the model tends to propose slots that are already taken, so the
-deterministic `_free_slots` scan is what makes the button reliable rather than a coin flip.
+When sessions are marked skipped, recalculation preserves completed milestones and rebooks
+only the missed topics into future open slots, verified against current availability windows.
 
 ---
 
 ### 5. Readiness Predictor
 
-`agents/readiness_predictor_agent.py` — runs once per subject.
+`agents/readiness_predictor_agent.py` — evaluates exam preparedness per subject based on:
 
-Metrics are computed in Python *before* the prompt, so the model reasons over facts rather
-than doing arithmetic:
-
-- Topic coverage % — distinct topics touched by a **completed** session
-- Average test score %
-- Session completion rate %
-- Uncovered **hard** topics, listed by name
-- Days until the exam
-
-The prompt then walks five explicit chain-of-thought steps (coverage → score trend →
-difficulty gaps → time remaining → synthesis) before emitting `readiness_score` 0–100,
-`confidence`, `critical_gaps[]`, `strengths[]` and a one-line `prediction`.
-
-Every prediction is written to `performance_log`, which is what gives the Feedback Loop
-something to grade itself against later.
-
-**Fallback formula:**
-
-```
-readiness = 0.40 x coverage% + 0.35 x avg_score% + 0.25 x completion%
-            - 3 points per uncovered hard topic
-```
+- Topic coverage percentage (verified against completed sessions).
+- Weighted score trends across past tests.
+- Session completion rates.
+- Uncovered difficult topics.
+- Days remaining until the scheduled exam date.
 
 ---
 
 ### 6. Feedback Loop
 
-`agents/feedback_loop_agent.py` — closes the loop by grading the system's own predictions.
+`agents/feedback_loop_agent.py` — evaluates the accuracy of the platform's own predictions:
 
-Two calls:
+- Computes signed errors between predicted readiness and actual exam outcomes.
+- Detects systematic bias (over-confidence vs. under-confidence).
+- Generates actionable habit adjustments categorized by time management, study technique, and focus.
 
-1. **`analyze_prediction_accuracy`** — pairs `predicted_score` against `actual_score` from
-   `performance_log`, computes signed error, and asks the model to identify per-subject
-   **bias** (over-predicted / under-predicted / accurate), a **trend**, and concrete
-   `model_adjustments[]`. With no paired rows yet it short-circuits without calling the
-   model at all.
-2. **`generate_improvement_suggestions`** — 5–7 personalised tips, each tagged with a
-   category (time_management / technique / focus / revision / motivation) and an impact
-   level.
+---
 
-**Fallback:** mean absolute error per subject, with bias inferred from the signed mean
-crossing ±2 points.
+### 7. ADHD Adaptive Tutor
+
+`agents/adaptive_tutor_agent.py` — designed specifically for neurodivergent learning patterns and cognitive clarity:
+
+```mermaid
+graph TD
+    Input["Topic + Student Class Notes"] --> Prompt["ADHD Cognitive Ergonomics Engine"]
+    Prompt --> A["1. Intuition Anchor<br/>Why does this concept exist in 1-2 sharp sentences?"]
+    Prompt --> B["2. Everyday Physical Analogy<br/>Metaphor using plumbing, traffic, or real-world systems"]
+    Prompt --> C["3. ASCII Visual Mental Model<br/>Clean box-and-arrow diagrams (under 15 lines)"]
+    Prompt --> D["4. Key Mechanisms<br/>3-4 razor-sharp takeaways with zero academic fluff"]
+    Prompt --> E["5. Low-Stakes Checkpoint<br/>1 friendly multiple-choice question testing intuition"]
+
+    A --> Out["High-Retention Study Scroll"]
+    B --> Out
+    C --> Out
+    D --> Out
+    E --> Out
+```
+
+- **Material Compression (`/api/tutor/compress`):** Condenses dense textbook chapters and uploaded
+  handwritten notes into an intuitive study scroll.
+- **Grounding in Student Notes:** Extracts context from student-uploaded class notes (`study_notes` table)
+  so explanations reuse the specific terminology taught in lectures.
+- **Socratic Quick Helper (`/api/tutor/ask`):** Provides instant, supportive answers capped at 70 words
+  during active focus sessions to unblock stuck students without derailing concentration.
+
+---
+
+## ADHD & Neurodivergent Focus Suite
+
+SADHANA includes dedicated tools designed for executive function support, hyperfocus management, and energy fluctuations:
+
+### Thought Parking Lot
+- **Location:** Accessible globally from the navigation bar (`parkingLot.js`).
+- **Function:** When intrusive thoughts or tangential tasks arise during a study session, students can
+  quickly park them without opening separate apps.
+- **Persistence:** Stored in browser `localStorage`, with unread badge indicators and instant clearing once addressed.
+
+### Focus Shield & Distraction Blocker
+- **Location:** Focus Arena & Settings (`distractionBlocker.js`).
+- **Function:** Manages distraction-blocking preferences across 12+ common social and entertainment platforms
+  (Instagram, YouTube, Discord, Reddit, TikTok).
+- **Platform Integration:** Prompts Android Focus Mode triggers on mobile browsers and provides active visual
+  warning shields during study intervals on desktop.
+
+### Sensory Audio Engine
+- **Location:** Focus Arena (`audio.js`).
+- **Function:** Real-time ambient sound generation using the native **Web Audio API** (zero external sound files or streaming bandwidth required).
+- **Audio Modes:**
+  - **Brown Noise:** Deep, rumbling low-frequency noise optimized for masking distractions and sustaining attention.
+  - **Rain Texture:** Soft pink/white noise filtered to simulate natural rainfall.
+  - **Binaural Pulse:** 40 Hz gamma beat frequency to encourage cognitive focus.
+- **Persistence:** Selected mode and volume levels persist across reloads.
+
+### Low-Energy Day Dynamic Adaptation
+- **Location:** Today's Routine (`/api/routine/energy` & `/api/routine/adapt`).
+- **Function:** Students can toggle **Low Energy Mode** on difficult days.
+- **Behavior:** The optimizer dynamically reduces session volume, postpones high-difficulty topics,
+  and spreads workloads across subsequent days to maintain momentum without burnout.
 
 ---
 
 ## The closed loop
 
-The six agents aren't a pipeline — they're a cycle. Each lap should produce a better plan
-than the last.
-
 ```mermaid
 graph LR
-    U["Your syllabus"] --> A1["1 · Parse"]
-    A1 --> A2["2 · Judge difficulty"]
-    A2 --> A4["4 · Optimize schedule"]
-    EX["Exam dates<br/>+ availability"] --> A4
-    A4 --> ST["You study<br/>complete / skip sessions"]
-    ST --> A5["5 · Predict readiness"]
+    U["Syllabus & Notes"] --> A1["1 · Parse"]
+    A1 --> A2["2 · Judge Difficulty"]
+    A2 --> A4["4 · Optimize Schedule"]
+    EX["Exam Dates + Availability"] --> A4
+    A4 --> ST["Focus Arena & Study<br/>Complete / Skip / Park Thoughts"]
+    ST --> A7["7 · Adaptive Tutor<br/>Decompress topics"]
+    ST --> A5["5 · Predict Readiness"]
     A5 --> LOG[("performance_log")]
-    ST -->|"skipped"| RC["Recalculate<br/>re-book the misses"]
+    ST -->|"Skipped or Low Energy"| RC["Recalculate / Adapt"]
     RC --> A4
-    TS["Your real test scores"] --> A3["3 · Analyze performance"]
+    TS["Test Scores"] --> A3["3 · Analyze Performance"]
     A3 --> LOG
-    LOG --> A6["6 · Feedback loop"]
-    A6 -->|"bias correction<br/>+ study tips"| A4
-    A6 -.->|"informs"| YOU["You"]
+    LOG --> A6["6 · Feedback Loop"]
+    A6 -->|"Bias correction & tips"| A4
+    A6 -.->|"Informs"| YOU["Student"]
     YOU --> ST
 ```
 
@@ -521,18 +423,20 @@ graph LR
 
 ## Data model
 
-Nine tables, no ORM — `db/database.py` is hand-written SQL with `sqlite3.Row`.
+The SQLite database (`examflow.db`) contains 11 relational tables managed in `db/schema.sql`:
 
 ```mermaid
 erDiagram
-    subjects ||--o{ topics : "has"
-    subjects ||--o{ exam_schedule : "is examined by"
-    subjects ||--o{ test_scores : "scored in"
-    subjects ||--o{ study_sessions : "studied in"
-    subjects ||--o{ performance_log : "tracked by"
-    subjects ||--o{ uploaded_files : "documented by"
-    topics   ||--o{ difficulty_scores : "rated by"
-    topics   ||--o{ study_sessions : "covered by"
+    subjects ||--o{ topics : "contains"
+    subjects ||--o{ exam_schedule : "scheduled for"
+    subjects ||--o{ test_scores : "evaluated by"
+    subjects ||--o{ study_sessions : "allocated to"
+    subjects ||--o{ performance_log : "tracked in"
+    subjects ||--o{ uploaded_files : "sourced from"
+    subjects ||--o{ study_notes : "annotated by"
+    topics   ||--o{ difficulty_scores : "assessed by"
+    topics   ||--o{ study_sessions : "studied in"
+    routine_logs ||--o{ study_sessions : "logs daily"
 
     subjects {
         int id PK
@@ -540,7 +444,7 @@ erDiagram
         text code
         int credits
         int semester
-        real self_rating "1-10, your own guess"
+        real self_rating
     }
     topics {
         int id PK
@@ -553,34 +457,27 @@ erDiagram
     difficulty_scores {
         int id PK
         int topic_id FK
-        text level "easy|medium|hard"
-        real score "1-10"
-        real confidence "0-1"
-        text reasoning "the judge verdict"
+        text level
+        real score
+        real confidence
+        text reasoning
         timestamp assessed_at
     }
-    exam_schedule {
+    study_notes {
         int id PK
         int subject_id FK
-        date exam_date
-        text exam_time
-        int is_completed
+        text filename
+        text title
+        text summary
+        text extracted_text
     }
-    availability {
+    routine_logs {
         int id PK
-        text day_of_week
-        text start_time
-        text end_time
-        int is_peak
+        date log_date UK
         text energy_level
-    }
-    test_scores {
-        int id PK
-        int subject_id FK
-        text test_type
-        real score
-        real max_score
-        date test_date
+        int is_low_energy
+        int focus_minutes
+        int sessions_completed
     }
     study_sessions {
         int id PK
@@ -590,323 +487,176 @@ erDiagram
         text start_time
         int duration_min
         text priority
-        text status "planned|completed|skipped"
-    }
-    performance_log {
-        int id PK
-        int subject_id FK
-        real readiness_score
-        real predicted_score
-        real actual_score
-        real coverage_pct
-        timestamp logged_at
-    }
-    uploaded_files {
-        int id PK
-        text filename
-        text file_path
-        int subject_id FK
-        int processed
+        text status
     }
 ```
-
-**Two things to know about the schema:**
-
-- **`difficulty_scores` is append-only history.** Re-running the judge adds rows rather
-  than replacing them. `get_all_difficulties()` therefore filters to
-  `MAX(id) GROUP BY topic_id` — without that, counts inflate past the topic total and the
-  agents can be fed a stale score.
-- **`delete_subject` cascades manually**, deepest child first, because SQLite foreign keys
-  are enabled but the schema declares no `ON DELETE` rules.
 
 ---
 
 ## API reference
 
-Interactive docs at **`/docs`** while the server runs.
+Full interactive OpenAPI documentation is available at **`/docs`** when the server is running.
 
-### Data
+### Core Data & Schedule Endpoints
 
-| Method | Path | Notes |
+| Method | Path | Description |
 | --- | --- | --- |
-| `GET` | `/api/health` | `llm_configured`, active model, focus-slot labels |
-| `GET` | `/api/stats` | Counts for the HUD |
-| `POST` | `/api/seed` | Load the demo save |
-| `GET` `POST` | `/api/subjects` | List / create |
-| `DELETE` | `/api/subjects/{id}` | Cascades to every child table |
-| `GET` | `/api/topics` | All topics with subject name |
-| `GET` | `/api/subjects/{id}/topics` | Topics with their latest `difficulty` attached |
-| `POST` | `/api/topics` | Add one by hand |
-| `GET` | `/api/difficulties` | Latest score per topic |
-| `GET` | `/api/files` | Upload log |
-| `GET` | `/api/exams?upcoming=true` | Future, not-completed only |
-| `POST` | `/api/exams` | Upsert — one exam row per subject |
-| `POST` | `/api/exams/{id}/complete` | Mark done, drops off the overview |
-| `DELETE` | `/api/exams/{id}` · `POST /api/exams/purge` | Delete one / all past + completed |
-| `GET` `PUT` | `/api/availability` | `PUT` replaces the whole weekly grid |
-| `GET` `POST` | `/api/scores` | Test scores |
-| `GET` | `/api/performance/latest` · `/api/subjects/{id}/performance` | Readiness history |
-| `GET` | `/api/sessions` | The timetable |
-| `POST` | `/api/sessions/{id}/status` | `planned` \| `completed` \| `skipped` |
-| `DELETE` | `/api/sessions` | Clear the plan |
+| `GET` | `/api/health` | Service health, model status, and capability flags |
+| `GET` | `/api/stats` | High-level counters for the retro HUD |
+| `POST` | `/api/seed` | Seed demo curriculum, exams, and difficulty ratings |
+| `GET` `POST` | `/api/subjects` | List or create academic subjects |
+| `DELETE` | `/api/subjects/{id}` | Delete subject (cascades through child tables) |
+| `GET` `POST` | `/api/topics` | Query or insert syllabus topics |
+| `GET` | `/api/subjects/{id}/topics` | Fetch topics with calibrated difficulty scores attached |
+| `GET` | `/api/difficulties` | Retrieve latest difficulty evaluation per topic |
+| `GET` `POST` | `/api/exams` | Query upcoming exams or upsert target exam dates |
+| `POST` | `/api/exams/{id}/complete` | Mark an exam as finished |
+| `GET` `PUT` | `/api/availability` | Fetch or replace the weekly study availability window |
+| `GET` `POST` | `/api/scores` | Log test results (CIEs, quizzes, midterms) |
+| `GET` | `/api/sessions` | Retrieve scheduled study sessions |
+| `POST` | `/api/sessions/{id}/status` | Update session status (`planned`, `completed`, `skipped`) |
+| `DELETE` | `/api/sessions` | Reset the current revision timetable |
 
-### Agents
+### AI Agent Endpoints
 
-Each returns HTTP 502 with a readable `error` if the model call fails, or 400 if a
-precondition isn't met.
-
-| Path | Precondition | Typical latency |
+| Method | Path | Description |
 | --- | --- | --- |
-| `POST /api/upload` | Subject exists | 11s text · **58s images** |
-| `POST /api/agent/assess-difficulty` | Subject has topics | ~30s for 11 topics |
-| `POST /api/agent/analyze-performance` | ≥1 test score | ~8s |
-| `POST /api/agent/generate-plan` | Availability **and** an upcoming exam | ~50s |
-| `POST /api/agent/recalculate-plan` | ≥1 skipped session + availability | ~20s |
-| `POST /api/agent/predict-readiness` | ≥1 subject | ~26s for 6 subjects |
-| `POST /api/agent/insights` | none | ~3s |
+| `POST` | `/api/upload` | Process syllabus documents and extract structured units |
+| `POST` | `/api/agent/assess-difficulty` | Run 3-pass LLM-as-Judge difficulty calibration |
+| `POST` | `/api/agent/analyze-performance` | Evaluate test scores and rebalance subject priorities |
+| `POST` | `/api/agent/generate-plan` | Generate timetable adhering to constraints |
+| `POST` | `/api/agent/recalculate-plan` | Reallocate skipped sessions into upcoming available slots |
+| `POST` | `/api/agent/predict-readiness` | Generate readiness forecasts and spot critical gaps |
+| `POST` | `/api/agent/insights` | Run meta-evaluations and generate feedback guidance |
+
+### ADHD & Routine Endpoints
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `POST` | `/api/tutor/compress` | Generate an ADHD-friendly cognitive study scroll |
+| `POST` | `/api/tutor/ask` | Fast Socratic question answering (<70 words) |
+| `GET` | `/api/subjects/{id}/notes` | Fetch extracted lecture notes by subject |
+| `GET` | `/api/routine/today` | Fetch or initialize today's routine metrics |
+| `POST` | `/api/routine/energy` | Set low-energy day status and energy level |
+| `POST` | `/api/routine/focus` | Record focus session minutes into daily tracking |
+| `POST` | `/api/routine/adapt` | Adapt timetable specifically for low-energy days |
+| `GET` | `/api/routine/stats` | Retrieve cumulative streak and focus session statistics |
 
 ---
 
 ## Frontend architecture
 
-No React, no bundler, no `node_modules`. `frontend/js/` is plain ES modules served
-directly by FastAPI, so editing a file and refreshing is the entire dev loop.
+The frontend is built with pure ES modules, CSS variables, and HTML5 canvas/SVG. It requires
+no React, Vite, Webpack, or npm dependencies.
 
-### Design system — 8-bit arcade, light
+### Design System: 8-Bit Arcade
+- **Typography:** `Press Start 2P` for arcade headings and badges; `VT323` at 21px for body copy.
+- **Palette:** Classic arcade palette (`--paper: #FDF6E3`, `--ink: #1A1A2E`, `--blue: #2A6FDB`, `--red: #E63946`, `--yellow: #FFC94A`, `--green: #3FA34D`).
+- **Icons & Sprites:** Procedurally compiled SVG rects generated via character grids in `sprites.js` with zero image asset overhead.
+- **Charts:** Lightweight, crisp SVG visualizers in `ui.js` (radar chart, bar charts, step-line charts, stat meters).
 
-All tokens are CSS custom properties at the top of [pixel.css](frontend/css/pixel.css):
+### Navigation Routes
 
-```
---paper  #FDF6E3   --ink    #1A1A2E   --red    #E63946   --blue   #2A6FDB
---panel  #FFFFFF   --yellow #FFC94A   --green  #3FA34D   --purple #7B4FBF
---px 4px           --edge 4px solid ink        --shadow-hard 6px 6px 0 ink
-```
-
-`Press Start 2P` for headings, labels and buttons; `VT323` at 21px for body copy — the
-pixel display face is unreadable at paragraph size, so it's never used there. Chrome is
-built from hard 4px outlines and offset shadows with `steps()` easing, never blur or
-gradients.
-
-### The sprite engine
-
-Every icon in the app is a character grid compiled to SVG `<rect>` elements. There are no
-image assets anywhere in the project.
-
-```js
-coin: [
-  '..KKKK..',      // K = ink outline
-  '.KYYYYK.',      // Y = yellow
-  'KYYOOYYK',      // O = orange shading
-  ...
-]
-sprite('coin', 32, 'bob bd2')   // -> <svg shape-rendering="crispEdges">
-```
-
-27 sprites. Scales to any size without blurring, themes by editing one palette map,
-and costs nothing to load. `bd1`–`bd5` are staggered animation delays so a row of sprites
-floats as a wave instead of in lockstep.
-
-### Charts
-
-Plotly was removed — it fought the aesthetic and shipped a broken call. The replacements
-are hand-drawn SVG in [ui.js](frontend/js/ui.js), all `shape-rendering="crispEdges"`:
-
-`barChart` · `dualBarChart` · `stackBar` · `lineChart` (step, square markers) ·
-**`radarChart`** (angular polygon rings, caps at 16 spokes before labels collide) ·
-`heartMeter` · `statBlock` (RPG-style stat bars) · `meter`
-
-### The world map
-
-The Optimizer's timetable opens on a **world map** — one tile per day, joined by a dashed
-road, with your exams rendered as castles. Tile state is derived, not decorative:
-
-| Tile | Meaning |
-| --- | --- |
-| `?` block | Scheduled, nothing done yet |
-| Coin | Partially cleared |
-| Flag | Every session that day completed |
-| Ghost | Day is in the past with nothing completed |
-| **Castle** | Exam day — shown even if no sessions are scheduled, labelled with the subject |
-
-Today's tile is scaled up, ringed, and carries a bobbing **YOU ARE HERE** marker. A run
-progress meter sits underneath. Exam dates are merged into the date axis, so a boss day
-always appears on the road even when the optimizer scheduled nothing on it.
-
-### Screens
-
-| Route | Module | Screen |
+| Route | Module | Purpose |
 | --- | --- | --- |
-| `#/` | `pages/home.js` | Scrollytelling landing |
-| `#/setup` | `pages/setup.js` | Level 1 — subjects, uploads, save file |
-| `#/syllabus` | `pages/syllabus.js` | Level 2 — topic tree, judge verdicts, difficulty radar |
-| `#/schedule` | `pages/schedule.js` | Level 3 — exam timers, availability grid |
-| `#/performance` | `pages/performance.js` | Level 4 — scores, expected vs actual |
-| `#/optimizer` | `pages/optimizer.js` | Level 5 — timetable, readiness, generate/recalculate |
-| `#/feedback` | `pages/feedback.js` | Level 6 — trends, accuracy, tips |
-
-Each module exports `renderX()` (returns an HTML string) and `mountX()` (binds events
-after it's in the DOM). The router in `app.js` calls them in that order.
-
-### Scrollytelling
-
-The landing page drives a sticky visual stage from whichever caption is centred in the
-viewport, via `IntersectionObserver` at `threshold: 0.55` — no scroll-position maths, no
-layout thrash. A second observer handles one-shot reveals. Twelve parallax sprites are
-translated on a single `requestAnimationFrame`-throttled scroll listener, and they're
-positioned in the page **gutters** so they never drift across body copy.
-
-### Two accessibility affordances
-
-- **CALM MODE** (HUD, persisted to `localStorage`) kills scanlines, the dot grid, floating
-  sprites and all animation in one click.
-- `prefers-reduced-motion: reduce` disables animation independently, without being asked.
-
-### Security
-
-Everything reaching `innerHTML` passes through `esc()` in `ui.js`. This matters more than
-usual here: topic names and reasoning strings are **model-generated** from documents you
-upload, so they're untrusted input. Keep using `esc()` for anything new.
+| `#/` | `pages/home.js` | Landing page with scrollytelling introduction |
+| `#/setup` | `pages/setup.js` | Manage subjects, upload syllabi, and load saves |
+| `#/syllabus` | `pages/syllabus.js` | Topic outline, difficulty radar, judge evaluations |
+| `#/schedule` | `pages/schedule.js` | Exam countdowns and weekly availability grid |
+| `#/performance` | `pages/performance.js` | Test score tracking, progress analysis, and insights |
+| `#/optimizer` | `pages/optimizer.js` | Timetable map, Focus Arena, Adaptive Tutor, and recalculation |
+| `#/feedback` | `pages/feedback.js` | Prediction accuracy analysis and study recommendations |
 
 ---
 
 ## Project layout
 
 ```
-run.py                  Launcher — uvicorn + opens a browser
-prewarm.py              Pre-parse uploads/ into the cache before a demo
-config.py               Paths, arcade palette, OpenRouter LLM factory
-.env                    Secrets (gitignored) · .env.example is the template
+run.py                      Launcher — boots FastAPI on uvicorn and opens browser
+prewarm.py                  Caches document parses from uploads/ ahead of time
+config.py                   Paths, palette definitions, and OpenRouter LLM setup
+.env                        Local secrets (gitignored) · .env.example template
 
 backend/
-  main.py               The entire REST API + static hosting. ~600 lines.
+  main.py                   REST API endpoints and static frontend hosting
 
-agents/                 Six LLM agents. No HTTP, no framework imports.
-  syllabus_parser_agent.py
-  difficulty_assessor_agent.py
-  performance_analyzer_agent.py
-  schedule_optimizer_agent.py
-  readiness_predictor_agent.py
-  feedback_loop_agent.py
+agents/                     Seven decoupled LLM agents (pure Python)
+  syllabus_parser_agent.py      Extracts units/topics with multimodal vision support
+  difficulty_assessor_agent.py  3-pass LLM-as-Judge difficulty calibration
+  performance_analyzer_agent.py Translates test scores to subject priority shifts
+  schedule_optimizer_agent.py   Constraint-satisfying study plan generator
+  readiness_predictor_agent.py  Readiness forecasting and gap identification
+  feedback_loop_agent.py        Prediction accuracy evaluation & personalized advice
+  adaptive_tutor_agent.py       ADHD-friendly topic decompression and Q&A
 
 db/
-  schema.sql            9 tables, CREATE TABLE IF NOT EXISTS
-  database.py           Hand-written SQL helpers
-
-utils/seed_data.py      Demo save file
+  schema.sql                11 SQLite tables (subjects, routines, sessions, notes)
+  database.py               Thread-safe SQLite queries and business logic
 
 frontend/
-  index.html            App shell
-  css/pixel.css         The whole design system
+  index.html                Lightweight single-page application shell
+  css/pixel.css             8-bit arcade design tokens and layouts
   js/
-    app.js              Router, HUD, parallax, calm mode, Konami code
-    api.js              Typed fetch wrapper, one method per endpoint
-    ui.js               Toasts, loader, esc(), collapsibles, all charts
-    sprites.js          Pixel-grid sprite factory
-    pages/*.js          One module per screen
+    app.js                  Hash router, retro HUD, calm mode, and sound effects
+    api.js                  Typed fetch client for all backend endpoints
+    audio.js                ADHD sensory audio generator (Brown Noise, Rain, Binaural)
+    parkingLot.js           Quick-capture thought parking lot with badge notifications
+    distractionBlocker.js   Distraction app blocker and focus shield
+    sprites.js              Vector pixel-art sprite rendering engine
+    ui.js                   Toasts, modal dialogues, and responsive SVG charts
+    pages/*.js              Page modules for each level of the app
 
-legacy_streamlit/       The previous Streamlit UI. Reference only, not wired up.
-uploads/                Uploaded syllabi and question papers
-examflow.db             SQLite database
+uploads/                    Uploaded syllabi, exam schedules, and notes
+examflow.db                 SQLite database
 ```
 
 ---
 
 ## Extending it
 
-### Add an agent
+### Adding a new agent
+1. Create `agents/my_agent.py` as a function accepting inputs and returning a dictionary.
+2. Initialize models with `get_llm(temperature=..., max_tokens=..., json_mode=True)` and include a deterministic fallback.
+3. Expose the agent in `backend/main.py` wrapped inside `agent_call(...)` for automatic 502 error handling.
+4. Bind the endpoint in `frontend/js/api.js` and call it using `withLoader(...)` in the UI.
 
-1. Write `agents/my_agent.py` as a plain function taking dicts and returning a dict. Call
-   `get_llm(temperature=..., max_tokens=..., json_mode=True)`. **Give it a fallback.**
-2. Add a route in `backend/main.py`, gather its inputs from `db.database`, and invoke it
-   through `agent_call(...)` so failures become clean 502s.
-3. Add a method to `frontend/js/api.js`.
-4. Call it from a page behind `withLoader('DOING THE THING', () => api.myThing())` — that
-   handles the loader, the error toast and the spinner teardown for you.
-
-### Add a sprite
-
-Append a character grid to `SPRITES` in `sprites.js` using the existing palette keys, then
-`sprite('myicon', 32)`. Any rectangular grid works; most are 8×8.
-
-### Add a screen
-
-Create `pages/mypage.js` exporting `renderMyPage()` and `mountMyPage()`, then register it
-in `ROUTES` and `NAV` in `app.js`.
+### Adding a sprite
+Add a 2D string array to the `SPRITES` object in `frontend/js/sprites.js` using palette character mappings,
+then invoke it anywhere via `sprite('mysprite', 32)`.
 
 ---
 
 ## Performance and cost
 
-Measured on the default `openai/gpt-4o-mini`, 6 subjects / 115 topics / 220 sessions:
+Benchmarks using the default `openai/gpt-4o-mini` on a curriculum of 6 subjects and 115 topics:
 
-| Action | Time | Rough cost |
+| Action | Latency | Estimated cost |
 | --- | --- | --- |
-| Parse a text syllabus (PDF/TXT) | 5–15s | < $0.01 |
-| Parse an image syllabus (vision) | 6–18s | < $0.01 |
-| **Any cached document** | **0.1–0.4s** | **free** |
-| Parse an image with `EXAMFLOW_VISION=0` | 40–90s | < $0.01 (OCR is local) |
-| Difficulty assessment, 11 topics | 30s | ~$0.01 (3 calls) |
-| Performance analysis | 8s | < $0.01 |
-| **Generate full plan, 220 sessions** | **50s** | **~$0.01** (largest output) |
-| Recalculate | 20s | < $0.01 |
-| Readiness, 6 subjects | 26s | ~$0.01 (6 calls) |
-| Feedback insights | 3s | < $0.01 |
-
-A full loop across every agent costs a few cents. The dominant latency is the optimizer's
-single large completion; the dominant *local* cost is image OCR.
+| Parse text syllabus (PDF/TXT) | 5–15s | < $0.01 |
+| Parse image syllabus (Vision) | 6–18s | < $0.01 |
+| **Any cached document hit** | **0.1–0.4s** | **$0.00 (Free)** |
+| 3-Pass difficulty assessment (11 topics) | ~30s | ~$0.01 |
+| Performance analysis | ~8s | < $0.01 |
+| **Generate complete plan (200+ sessions)**| **~45s** | **~$0.01** |
+| Dynamic recalculation | ~20s | < $0.01 |
+| Adaptive Tutor compression | ~4–8s | < $0.01 |
+| Sensory Audio Engine (Brown Noise/Rain) | **Instant** | **$0.00 (Runs 100% in browser)** |
 
 ---
 
 ## Troubleshooting
 
-**"OPENROUTER_API_KEY is not set"** — put it in `.env` at the project root and restart.
-The server reads `.env` once at import.
-
-**`python` fails but `py -3` works (Windows)** — `C:\Windows\System32\python` is a stub
-that shadows the real interpreter. Use `py -3` or the full path to `python.exe`.
-
-**Image uploads are slow** — check `/api/health` reports `"vision": true`. If it's false,
-set `EXAMFLOW_VISION=1`. If it's true and uploads are still slow, the vision call is
-falling back to OCR because your configured model can't read images — switch
-`EXAMFLOW_MODEL` to a multimodal one such as `openai/gpt-4o-mini`.
-
-**"No module named 'rapidocr_onnxruntime'"** — only needed for the offline OCR fallback:
-`pip install rapidocr-onnxruntime`. With vision enabled you don't need it at all.
-
-**A demo upload must not be slow** — run `python prewarm.py` beforehand. Cached uploads
-return in ~0.2s and never touch the network.
-
-**The plan says "LLM generation failed, using algorithmic fallback"** — your model hit its
-output ceiling. Either lower `EXAMFLOW_MAX_OUTPUT_TOKENS` below the model's real limit,
-switch to a model with a larger output window, or narrow your availability windows so the
-grid needs fewer sessions.
-
-**"Nothing to redistribute"** — recalculate only acts on sessions marked *skipped*. Skip
-one from the Timetable tab first.
-
-**Difficulty counts look wrong** — they shouldn't any more; `get_all_difficulties()`
-returns the latest score per topic. If you see totals above your topic count, you're on an
-older build.
-
-**UI looks stale after an update** — hard-refresh (`Ctrl+Shift+R`). The JS is served
-unbundled and unversioned, so browsers cache it aggressively.
+- **`OPENROUTER_API_KEY is not set`**: Create a `.env` file in the project root containing `OPENROUTER_API_KEY=your_key` and restart `python run.py`.
+- **Windows launcher conflicts**: If `python` opens the Windows Store, execute using `py -3 run.py` instead.
+- **Audio engine produces no sound**: Web browsers require user interaction before playing audio. Click anywhere inside the Focus Arena to initialize the Web Audio context.
+- **Offline OCR installation**: For offline environments without vision API access, run `pip install rapidocr-onnxruntime`.
+- **Clearing the parse cache**: Run `python prewarm.py --clear` to purge cached document hashes from `.cache/`.
+- **Browser caching during local development**: Use `Ctrl + F5` or `Ctrl + Shift + R` to hard-refresh unbundled JavaScript modules.
 
 ---
 
 ## Known limitations
 
-- **Single user, no auth.** One SQLite file, no accounts. It's designed to run on your own
-  machine.
-- **`actual_score` is never populated by the UI.** The Feedback Loop's accuracy analysis
-  needs real post-exam results in `performance_log.actual_score`, and there's currently no
-  screen to enter them — so it reports "no prediction-actual pairs" until you write them
-  in yourself. This is the most valuable thing left to build.
-- **Uploads are trusted by filename only.** Fine locally; do not expose this server to a
-  network without adding validation.
-- **Question-paper analysis is displayed but not stored.** Its output informs you, not the
-  optimizer.
-- **The optimizer re-plans from scratch.** Generating discards completed-session history
-  from the plan (the rows survive, but the new plan doesn't route around them).
-  Recalculate is the incremental path.
-- **No test suite.** Verification so far has been manual plus a headless-browser smoke
-  pass across all seven routes.
+- **Single-User Architecture:** Designed for local self-hosted execution via SQLite; multi-tenant authentication is not configured by default.
+- **Local Network Exposure:** Uploaded file names and payloads are validated for local desktop use; add rigorous file-type sanitization before exposing port 8000 to public networks.
+- **Plan Generation Scope:** Re-generating the schedule creates a fresh optimization run. To preserve completed session history, use the **Recalculate** or **Low Energy Adapt** features.
