@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SADHANA — An ADHD-inclusive, AI-powered academic support platform for university students.">
+  <meta name="color-scheme" content="light">
+  <title>SADHANA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/css/pixel.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Crect width='8' height='8' fill='%231A1A2E'/%3E%3Crect x='1' y='1' width='6' height='6' fill='%23FFC94A'/%3E%3Crect x='2' y='2' width='2' height='1' fill='%231A1A2E'/%3E%3Crect x='4' y='3' width='1' height='1' fill='%231A1A2E'/%3E%3Crect x='3' y='4' width='1' height='1' fill='%231A1A2E'/%3E%3Crect x='3' y='6' width='1' height='1' fill='%231A1A2E'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- Parallax pixel sprites layer (disabled for SADHANA — distraction-free) -->
+  <div class="sprite-layer" id="sprites" aria-hidden="true" style="display:none"></div>
+
+  <header class="hud" id="hud"></header>
+
+  <main id="view"></main>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <noscript>
+    <div style="padding:40px;text-align:center">
+      <h2>JAVASCRIPT REQUIRED</h2>
+      <p>ExamFlow AI is a single-page app. Enable JavaScript to play.</p>
+    </div>
+  </noscript>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

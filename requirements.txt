@@ -1,0 +1,11 @@
+﻿fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+langchain-openai
+langchain-core
+PyPDF2
+
+# On-device OCR for image uploads (PNG/JPG syllabus photos & screenshots).
+# Pulls onnxruntime, so it is a large install — drop it if you only use PDF/TXT.
+rapidocr-onnxruntime
